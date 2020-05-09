@@ -294,7 +294,7 @@ class Operations:
         except ValueError:
             raise ValueError('Либо такого id нет в базе, либо нет такого класса')
         else:
-            update[column_name] = value                 #ClassName object is not subscripitable (можно обращаться к update только через точку, а не через [])
+            setattr(update, column_name, value)               #ClassName object is not subscripitable (можно обращаться к update только через точку, а не через [])
             db.session.commit()
             return True
 
@@ -302,8 +302,10 @@ class Operations:
 def main():  #Кто опять будет тупить и не запустит эту функцию перед запуском скрипта - тот здохнед
     db.create_all()
 
-    Operations.appending(Users, 'VasilyPupkin', 'rqwqq', 'Vasily', 1225,
-                'Vasily', 'Pupkin')
+    Operations.appending(Users, 'VP', 'rqwqtqt', 'Happy',
+                         228, 'Petr', 'Semenov')
+    Operations.return_table(Users)
+    Operations.return_row(Users, 4)
+    Operations.update(Users, id=5, column_name="name", value="Dop")
     Operations.remove(Users, id=5)
-    Operations.return_table()
-    Operations.return_row(Users, id=4)
+
