@@ -12,46 +12,47 @@ def db_connection(user, password, psql_url, psql_db):                           
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_connection(user='postgres', password='2423',
-                                                      psql_url='dvv2423.fvds.ru', psql_db='flaskapp')
+                                                      psql_url='dvv2423.fvds.ru', psql_db='social_network_2')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False           # silence the deprecation warning
 
 db = SQLAlchemy(app)
 
 
 public_subscribers = db.Table('PublicSubscribers',                    #работает без ролей
-    db.Column('pub_id', db.Integer, db.ForeignKey('public.pub_id')),
-    db.Column('u_id', db.Integer, db.ForeignKey('users.u_id')),
-    db.Column('ps_role', db.Integer, db.ForeignKey('roles.r_id'))
+    db.Column('pub_id', db.Integer, db.ForeignKey('public.id')),
+    db.Column('u_id', db.Integer, db.ForeignKey('users.id')),
+    db.Column('ps_role', db.Integer, db.ForeignKey('roles.id'))
 )
 
 post_published_by_user = db.Table('PostPublishedByUser',                  #работает
-    db.Column('pub_id', db.Integer, db.ForeignKey('post.p_id')),
-    db.Column('pu_id', db.Integer, db.ForeignKey('users.u_id'))
+    db.Column('pub_id', db.Integer, db.ForeignKey('post.id')),
+    db.Column('pu_id', db.Integer, db.ForeignKey('users.id'))
 )
 
 post_published_by_public = db.Table('PostPublishedByPublic',                  #работает
-    db.Column('pub_id', db.Integer, db.ForeignKey('post.p_id')),
-    db.Column('pu_id', db.Integer, db.ForeignKey('public.pub_id'))
+    db.Column('pub_id', db.Integer, db.ForeignKey('post.id')),
+    db.Column('pu_id', db.Integer, db.ForeignKey('public.id'))
 )
 
 chat_members = db.Table('ChatMembers',                                      #работает без ролей
-    db.Column('chm_chat', db.Integer, db.ForeignKey('chat.c_id')),
-    db.Column('chm_member', db.Integer, db.ForeignKey('users.u_id'))
+    db.Column('chat', db.Integer, db.ForeignKey('chat.id')),
+    db.Column('member', db.Integer, db.ForeignKey('users.id'))
 )
 
 #friends = db.Table('Friends',                                          не работает
-#    db.Column('f_id_1', db.Integer, db.ForeignKey('users.u_id')),
-#    db.Column('f_id_2', db.Integer, db.ForeignKey('users.u_id'))
+#    db.Column('id_1', db.Integer, db.ForeignKey('users.id')),
+#    db.Column('id_2', db.Integer, db.ForeignKey('users.id'))
 #)
 
 
 class Users(db.Model):
-    u_id = db.Column(db.INTEGER, primary_key=True)
-    u_nick = db.Column(db.VARCHAR(50), nullable=False)
-    u_avatar = db.Column(db.VARCHAR(200))
-    u_descr = db.Column(db.VARCHAR(500))
-    u_password = db.Column(db.VARCHAR(50), nullable=False)
-    u_fl = db.Column(db.VARCHAR(50))
+    id = db.Column(db.INTEGER, primary_key=True)
+    nick = db.Column(db.VARCHAR(50), nullable=False)
+    avatar = db.Column(db.VARCHAR(200))
+    descr = db.Column(db.VARCHAR(500))
+    password = db.Column(db.VARCHAR(50), nullable=False)
+    name = db.Column(db.VARCHAR(50))
+    surname = db.Column(db.VARCHAR(50))
 
     subscriptions = db.relationship('Public', secondary=public_subscribers,
                                     backref=db.backref('subscribers', lazy='dynamic'))
@@ -67,88 +68,90 @@ class Users(db.Model):
     #followers = db.relationship('Users', secondary=friends,
      #                           backref=db.backref('subscribe', lazy='dynamic'))
 
-    def __init__(self, u_nick, u_avatar,
-                 u_descr, u_password, u_fl):
+    def __init__(self, nick, avatar,
+                 descr, password, name,
+                 surname):
 
-        self.u_nick = u_nick
-        self.u_avatar = u_avatar
-        self.u_descr = u_descr
-        self.u_password = u_password
-        self.u_fl = u_fl
+        self.nick = nick
+        self.avatar = avatar
+        self.descr = descr
+        self.password = password
+        self.name = name
+        self.surname = surname
 
 
 class Message(db.Model):
-    m_id = db.Column(db.INTEGER, primary_key=True)
-    m_time = db.Column(db.DATE, default=func.now(), nullable=False)
-    m_text = db.Column(db.VARCHAR(1000), nullable=False)
-    m_sentby = db.Column(db.Integer, db.ForeignKey('users.u_id'))
-    m_chat = db.Column(db.Integer, db.ForeignKey('chat.c_id'))
+    id = db.Column(db.INTEGER, primary_key=True)
+    time = db.Column(db.DATE, default=func.now(), nullable=False)
+    text = db.Column(db.VARCHAR(1000), nullable=False)
+    sentby = db.Column(db.Integer, db.ForeignKey('users.id'))
+    chat = db.Column(db.Integer, db.ForeignKey('chat.id'))
 
-    def __init__(self, m_text, m_time=func.now()):
-        self.m_text=m_text
-        self.m_time=m_time
+    def __init__(self, text, time=func.now()):
+        self.text=text
+        self.time=time
 
 
 class Chat(db.Model):
-    c_id = db.Column(db.INTEGER, primary_key=True)
-    c_type = db.Column(db.VARCHAR(12), nullable=False)
-    c_title = db.Column(db.VARCHAR(80), nullable=False)
-    c_avatar = db.Column(db.VARCHAR(100))
+    id = db.Column(db.INTEGER, primary_key=True)
+    type = db.Column(db.VARCHAR(12), nullable=False)
+    title = db.Column(db.VARCHAR(80), nullable=False)
+    avatar = db.Column(db.VARCHAR(100))
 
     chat_messages = db.relationship('Message', backref='chat_message_owner')
 
-    def __init__(self, c_type, c_title,
-                 c_avatar=None):
-        self.c_type=c_type
-        self.c_title=c_title
-        self.c_avatar=c_avatar
+    def __init__(self, type, title,
+                 avatar=None):
+        self.type=type
+        self.title=title
+        self.avatar=avatar
 
 
 class Post(db.Model):
-    p_id = db.Column(db.Integer, primary_key=True)
-    p_text = db.Column(db.VARCHAR(1000), nullable=False)
-    p_photo = db.Column(db.VARCHAR(200))
-    p_time = db.Column(db.DATE, default=func.now())
-    p_views = db.Column(db.NUMERIC(7), default=0, nullable=False)
-    p_likes = db.Column(db.NUMERIC(7), default=0, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.VARCHAR(1000), nullable=False)
+    photo = db.Column(db.VARCHAR(200))
+    time = db.Column(db.DATE, default=func.now())
+    views = db.Column(db.NUMERIC(7), default=0, nullable=False)
+    likes = db.Column(db.NUMERIC(7), default=0, nullable=False)
 
-    def __init__(self, p_text, p_time=func.now(), p_photo=None,
-                 p_views=0, p_likes=0):
-        self.p_text = p_text
-        self.p_time=p_time
-        self.p_photo=p_photo
-        self.p_views=p_views
-        self.p_likes=p_likes
+    def __init__(self, text, time=func.now(), photo=None,
+                 views=0, likes=0):
+        self.text = text
+        self.time=time
+        self.photo=photo
+        self.views=views
+        self.likes=likes
 
 
 class Public(db.Model):
-    pub_id = db.Column(db.Integer, primary_key=True)
-    pub_title = db.Column(db.VARCHAR(80), nullable=False)
-    pub_avatar = db.Column(db.VARCHAR(100))
-    pub_description = db.Column(db.VARCHAR(200))
-    public_post_published = db.relationship('Post', secondary=post_published_by_public,
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.VARCHAR(80), nullable=False)
+    avatar = db.Column(db.VARCHAR(100))
+    description = db.Column(db.VARCHAR(200))
+    post_published = db.relationship('Post', secondary=post_published_by_public,
                                             backref=db.backref('pub_published', lazy='dynamic'))
 
-    def __init__(self, pub_title, pub_description=None, pub_avatar=None):
-        self.pub_title = pub_title
-        self.pub_description = pub_description
-        self.pub_avatar = pub_avatar
+    def __init__(self, title, description=None, avatar=None):
+        self.title = title
+        self.description = description
+        self.avatar = avatar
 
 
 class Roles(db.Model):
-    r_id = db.Column(db.Integer, primary_key=True)
-    r_title = db.Column(db.VARCHAR(30), nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.VARCHAR(30), nullable=False)
 
-    def __init__(self, r_title):
-        self.r_title=r_title
+    def __init__(self, title):
+        self.title=title
 
 
 class Check:
     @staticmethod
     def public_subscribers_checking(UserObject, PublicObject):
-        #user = Users(u_nick='nagibator228', u_avatar='', u_descr='dodik', u_password=12345,
-        #     u_fl='Martin Iden')
-        #public = Public(pub_title='dqrq', pub_avatar='fqt', pub_description='qwtwqtqt')
+        #user = Users(nick='nagibator228', avatar='', descr='dodik', password=12345,
+        #     name='Martin', surname='Iden')
+        #public = Public(title='dqrq', avatar='fqt', description='qwtwqtqt')
         try:
             db.session.add(UserObject)                                                              #можно использовать db.session.add_all([public, user])
             db.session.add(PublicObject)
@@ -161,9 +164,9 @@ class Check:
 
     @staticmethod
     def user_post_published_checking(UserObject, PostObject):
-        #user = Users(u_nick='na132', u_avatar='rqwtq', u_descr='dok', u_password=125,
-        #         u_fl='Fidel Castro')
-        #post = Post(p_text='Cuba is free!')
+        #user = Users(nick='na132', avatar='rqwtq', descr='dok', password=125,
+        #         name='Fidel', surname='Castro')
+        #post = Post(text='Cuba is free!')
         try:
             db.session.add(UserObject)
             db.session.add(PostObject)
@@ -176,8 +179,8 @@ class Check:
 
     @staticmethod
     def public_post_published_checking(PublicObject, PostObject):
-        #public = Public(pub_title='d123')
-        #post = Post(p_text='Hello!')
+        #public = Public(title='d123')
+        #post = Post(text='Hello!')
         try:
             db.session.add(PublicObject)
             db.session.add(PostObject)
@@ -191,9 +194,9 @@ class Check:
     @staticmethod
     def user_chat_member_checking(UserObject, ChatObject):
         try:
-            #user = Users(u_nick='VasilyPupkin', u_avatar='rqwqq', u_descr='Vasily', u_password=1225,
-            #         u_fl='Vasily Pupkin')
-            #chat = Chat(c_type='dialog', c_title='basedata')
+            #user = Users(nick='VasilyPupkin', avatar='rqwqq', descr='Vasily', password=1225,
+            #         name='Vasily', surname='Pupkin')
+            #chat = Chat(type='dialog', title='basedata')
             db.session.add(UserObject)
             db.session.add(ChatObject)
             ChatObject.chat_join.append(UserObject)
@@ -205,9 +208,9 @@ class Check:
 
     @staticmethod
     def user2message_checking(UserObject, MessageObject):
-        #user = Users(u_nick='DonaldTrump', u_avatar='rqdwwqq', u_descr='America', u_password=1225,
-        #             u_fl='Hi Clinton')
-        #message = Message(m_text='America began operations in Russia!',
+        #user = Users(nick='DonaldTrump', avatar='rqdwwqq', descr='America', password=1225,
+        #             name='Hi', surname='Clinton')
+        #message = Message(text='America began operations in Russia!',
         #                  user_message_owner=user)
         try:
             db.session.add(UserObject)
@@ -221,8 +224,8 @@ class Check:
     @staticmethod
     def chat2message_checking(ChatObject, MessageObject):
         try:
-            #chat = Chat(c_type='dialog', c_title='next')
-            #message = Message(m_text='Hi, boys!',
+            #chat = Chat(type='dialog', title='next')
+            #message = Message(text='Hi, boys!',
             #              chat_message_owner=chat)
             db.session.add(ChatObject)
             db.session.add(MessageObject)
@@ -234,10 +237,10 @@ class Check:
 
 
     #def friends_checking():
-    #   user1 = Users(u_nick='VasilyPupkin', u_avatar='rqwqq', u_descr='Vasily', u_password=1225,
-    #                 u_fl='Vasily Pupkin')
-    #   user2 = Users(u_nick='DonaldTrump', u_avatar='rqdwwqq', u_descr='America', u_password=1225,
-    #                 u_fl='Hi Clinton')
+    #   user1 = Users(nick='VasilyPupkin', avatar='rqwqq', descr='Vasily', password=1225,
+    #                 name='Vasily', surname='Pupkin')
+    #   user2 = Users(nick='DonaldTrump', avatar='rqdwwqq', descr='America', password=1225,
+    #                 name='Hi', surname='Clinton')
 
     #    db.session.add(user1)
     #   db.session.add(user2)
@@ -245,42 +248,62 @@ class Check:
     #  db.session.commit()
 
 
-def return_table(ClassName):
-    return ClassName.query.all()
+class Operations:
 
-    #Пример:
-    #for el in return_table(Users):
-    #   print(el.u_nick)
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def return_row(ClassName, id):
+        ClassName.query.filter_by(id=id).first()
+
+    @staticmethod
+    def return_table(ClassName):
+        return ClassName.query.all()
+
+        #Пример:
+        #for el in return_table(Users):
+        #   print(el.u_nick)
+
+    @staticmethod
+    def appending(ClassName, *args):
+        try:
+            element = ClassName(*args)
+        except TypeError:
+            raise("Wrong number of table parameters")
+        else:
+            db.session.add(element)
+            db.session.commit()
+            return True
+
+    @staticmethod
+    def remove(ClassName, id):      #удаление нашел только по id (оно почему-то не удаляет :( )
+        try:
+            delete = ClassName.query.filter_by(id=id).first()
+        except ValueError:
+            raise ValueError('Либо такого id нет в базе, либо нет такого класса')
+        else:
+            db.session.delete(delete)
+            db.session.commit()
+            return True
+
+    @staticmethod                                           #не работает
+    def update(ClassName, id, column_name, value):
+        try:
+            update = ClassName.query.filter_by(id=id).first()
+        except ValueError:
+            raise ValueError('Либо такого id нет в базе, либо нет такого класса')
+        else:
+            update[column_name] = value                 #ClassName object is not subscripitable (можно обращаться к update только через точку, а не через [])
+            db.session.commit()
+            return True
 
 
-def appending(ClassName, *args):
-    try:
-        element = ClassName(*args)
-    except TypeError:
-        raise("Wrong number of table parameters")
-    else:
-        db.session.add(element)
-        db.session.commit()
-        return True
-
-
-def remove(ClassName, id):      #удаление нашел только по id (оно почему-то не удаляет :( )
-    try:
-        delete = ClassName.query.filter_by(u_id=id).first()
-    except ValueError:
-        raise ValueError('Либо такого id нет в базе, либо нет такого класса')
-    else:
-        print(delete)
-        db.session.delete(delete)
-        db.session.commit()
-        return True
-
-
-def main():
+def main():  #Кто опять будет тупить и не запустит эту функцию перед запуском скрипта - тот здохнед
     db.create_all()
 
-    remove(Users, 5)
-
-
-
-
+    Operations.appending(Users, 'VasilyPupkin', 'rqwqq', 'Vasily', 1225,
+                'Vasily', 'Pupkin')
+    Operations.remove(Users, id=5)
+    Operations.return_table()
+    Operations.return_row(Users, id=4)
