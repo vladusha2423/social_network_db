@@ -1,7 +1,7 @@
-if __name__ == '__main__':
-    from sqlalchemy.sql import func
-    from flask import Flask
-    from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy_filters import apply_filters
 
 
 def db_connection(user, password, psql_url, psql_db):                                       #Индивидуально для каждого
@@ -248,6 +248,14 @@ class Check:
     #  db.session.commit()
 
 
+tables = {'users': Users,
+          'message': Message,
+          'chat': Chat,
+          'post': Post,
+          'public': Public,
+          'roles': Roles}
+
+
 class Operations:
 
     def __init__(self):
@@ -255,11 +263,11 @@ class Operations:
 
     @staticmethod
     def return_row(ClassName, id):
-        ClassName.query.filter_by(id=id).first()
+        tables[ClassName].query.filter_by(id=id).first()
 
-    @staticmethod
-    def return_table(ClassName):
-        return ClassName.query.all()
+    @classmethod
+    def return_table(self, ClassName):
+        return tables[ClassName].query.all()
 
         #Пример:
         #for el in return_table(Users):
@@ -268,7 +276,7 @@ class Operations:
     @staticmethod
     def appending(ClassName, *args):
         try:
-            element = ClassName(*args)
+            element = tables[ClassName](*args)
         except TypeError:
             raise("Wrong number of table parameters")
         else:
@@ -276,10 +284,11 @@ class Operations:
             db.session.commit()
             return True
 
-    @staticmethod
-    def remove(ClassName, id):      #удаление нашел только по id (оно почему-то не удаляет :( )
+
+    @classmethod
+    def remove(self, ClassName, id):      #удаление нашел только по id (оно почему-то не удаляет :( )
         try:
-            delete = ClassName.query.filter_by(id=id).first()
+            delete = tables[ClassName].query.filter_by(id=id).first()
         except ValueError:
             raise ValueError('Либо такого id нет в базе, либо нет такого класса')
         else:
@@ -290,7 +299,7 @@ class Operations:
     @staticmethod                                           #не работает
     def update(ClassName, id, column_name, value):
         try:
-            update = ClassName.query.filter_by(id=id).first()
+            update = tables[ClassName].query.filter_by(id=id).first()
         except ValueError:
             raise ValueError('Либо такого id нет в базе, либо нет такого класса')
         else:
@@ -298,14 +307,31 @@ class Operations:
             db.session.commit()
             return True
 
+    @staticmethod
+    def erase(ClassName):
+        table = Operations.return_table(ClassName)
+        for row in table:
+            Operations.remove(ClassName, row.id)
+        return True
+
+    @staticmethod
+    def filter(ClassName, column, value, operation='=='):       #operation может быть не только '==', но и '<', '>'
+        query = db.session.query(tables[ClassName])
+        filter_spec = [{'field': column, 'op': operation, 'value': value}]
+        result = apply_filters(query, filter_spec).all()
+        return result
+
 
 def main():  #Кто опять будет тупить и не запустит эту функцию перед запуском скрипта - тот здохнед
     db.create_all()
 
-    Operations.appending(Users, 'VP', 'rqwqtqt', 'Happy',
-                         228, 'Petr', 'Semenov')
-    Operations.return_table(Users)
-    Operations.return_row(Users, 4)
-    Operations.update(Users, id=5, column_name="name", value="Dop")
-    Operations.remove(Users, id=5)
+
+    Operations.appending('users', 'StevenG', 'qwrqr', 'fqwrtqw', 12441,
+                         'Steven', 'Gerrard')
+
+    result = Operations.filter(ClassName='users', column='name',
+                               value='Steven')
+
+    for el in result:
+        print(el.id, el.nick)
 
