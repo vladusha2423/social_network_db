@@ -330,7 +330,7 @@ def main():  #Кто опять будет тупить и не запустит
                          'Steven', 'Gerrard')
 
     result = Operations.filter(ClassName='users', column='name',
-                               value='Steven')
+                               operation='==', value='Steven')
 
     for el in result:
         print(el.id, el.nick)
