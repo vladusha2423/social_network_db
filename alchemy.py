@@ -11,7 +11,6 @@ def db_connection(user, password, psql_url, psql_db):                           
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_connection(user='postgres', password='2423',
                                                       psql_url='dvv2423.fvds.ru', psql_db='flaskapp')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False           # silence the deprecation warning
 
 db = SQLAlchemy(app)
 
