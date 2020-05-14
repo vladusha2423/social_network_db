@@ -124,7 +124,6 @@ class Operations:
         self.tables[ClassName].query.filter_by(id=id).first()
 
     def return_table(self, ClassName):
-        print('cls.tables: ', self.tables)
         return self.tables[ClassName].query.all()
 
         # Пример:
@@ -341,6 +340,4 @@ class Context:
                        'roles': Roles}
 
         self.check = Check(self.db)
-        print('self.tables: ', self.tables)
         self.ops = Operations(self.db, self.tables)
-        print('self.ops: ', self.ops.tables)
