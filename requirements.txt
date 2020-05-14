@@ -1,10 +1,10 @@
-pip install --user click==7.1.2
-pip install --user  Flask==1.1.2
-pip install --user  Flask-SQLAlchemy==2.4.1
-pip install --user  itsdangerous==1.1.0
-pip install --user  Jinja2==2.11.2
-pip install --user  MarkupSafe==1.1.1
-pip install --user  psycopg2-binary==2.8.5
-pip install --user  SQLAlchemy==1.3.16
-pip install --user  Werkzeug==1.0.1
-pip install --user  sqlalchemy_filters
+click==7.1.2
+Flask==1.1.2
+Flask-SQLAlchemy==2.4.1
+itsdangerous==1.1.0
+Jinja2==2.11.2
+MarkupSafe==1.1.1
+psycopg2-binary==2.8.5
+SQLAlchemy==1.3.16
+Werkzeug==1.0.1
+sqlalchemy_filters
