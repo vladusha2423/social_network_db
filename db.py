@@ -272,7 +272,13 @@ class Context:
                 self.text = text
                 self.time = time
 
+        class MessageSchema(self.ma.Schema):
+            class Meta:
+                fields = ('id', 'time', 'text', 'sentby', 'chat')
+
         self.message = Message
+        self.message_schema = MessageSchema()
+        self.messages_schema = MessageSchema(many=True)
 
         class Chat(self.db.Model):
             id = self.db.Column(self.db.INTEGER, primary_key=True)
@@ -288,7 +294,13 @@ class Context:
                 self.title = title
                 self.avatar = avatar
 
+        class ChatSchema(self.ma.Schema):
+            class Meta:
+                fields = ('id', 'type', 'title', 'avatar')
+
         self.chat = Chat
+        self.chat_schema = ChatSchema()
+        self.chats_schema = ChatSchema(many=True)
 
         class Post(self.db.Model):
             id = self.db.Column(self.db.Integer, primary_key=True)
@@ -306,7 +318,13 @@ class Context:
                 self.views = views
                 self.likes = likes
 
+        class PostSchema(self.ma.Schema):
+            class Meta:
+                fields = ('text', 'time', 'photo', 'views', 'likes')
+
         self.post = Post
+        self.post_schema = PostSchema()
+        self.posts_schema = PostSchema(many=True)
 
         class Public(self.db.Model):
             id = self.db.Column(self.db.Integer, primary_key=True)
@@ -321,7 +339,13 @@ class Context:
                 self.description = description
                 self.avatar = avatar
 
+        class PublicSchema(self.ma.Schema):
+            class Meta:
+                fields = ('id', 'title', 'avatar', 'description', 'post_published')
+
         self.public = Public
+        self.public_schema = PublicSchema()
+        self.publics_schema = PublicSchema(many=True)
 
         class Roles(self.db.Model):
             id = self.db.Column(self.db.Integer, primary_key=True)
@@ -330,14 +354,20 @@ class Context:
             def __init__(self, title):
                 self.title = title
 
-        self.roles = Roles
+        class RolesSchema(self.ma.Schema):
+            class Meta:
+                fields = ('id', 'title')
 
-        self.tables = {'users': Users,
+        self.roles = Roles
+        self.role_schema = RolesSchema()
+        self.roles_schema = RolesSchema(many=True)
+
+        self.tables = {'user': Users,
                        'message': Message,
                        'chat': Chat,
                        'post': Post,
                        'public': Public,
-                       'roles': Roles}
+                       'role': Roles}
 
         self.check = Check(self.db)
         self.ops = Operations(self.db, self.tables)
