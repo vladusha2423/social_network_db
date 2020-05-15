@@ -258,7 +258,7 @@ class Context:
 
         class UserSchema(self.ma.Schema):
             class Meta:
-                fields = ('nick', 'avatar', 'descr', 'password', 'name', 'surname')
+                fields = ('id', 'nick', 'avatar', 'descr', 'password', 'name', 'surname')
 
         self.user = Users
         self.user_schema = UserSchema()

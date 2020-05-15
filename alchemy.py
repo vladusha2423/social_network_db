@@ -36,12 +36,8 @@ def appending(ClassName, *args):
         return True
 
 
-
-
-
 def main():
     db.create_all()
-
 
 
 main()
