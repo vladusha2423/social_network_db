@@ -181,12 +181,15 @@ class Operations:
 
 
 class Context:
-    def __init__(self, application):
+    def create_db(self):
+        self.db.create_all()
+
+    def __init__(self, application, user_mixin):
         self.app = application
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{user}:{pw}@{url}/{db}'.format(user='postgres',
                                                                                                   pw='2423',
                                                                                                   url='dvv2423.fvds.ru',
-                                                                                                  db='social_network_2')
+                                                                                                  db='social_network')
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
         self.db = SQLAlchemy(self.app)
@@ -220,7 +223,7 @@ class Context:
                                           self.db.Column('member', self.db.Integer, self.db.ForeignKey('users.id'))
                                           )
 
-        class Users(self.db.Model):
+        class Users(user_mixin, self.db.Model):
             id = self.db.Column(self.db.INTEGER, primary_key=True)
             nick = self.db.Column(self.db.VARCHAR(50), nullable=False)
             avatar = self.db.Column(self.db.VARCHAR(200))
@@ -371,3 +374,4 @@ class Context:
 
         self.check = Check(self.db)
         self.ops = Operations(self.db, self.tables)
+
