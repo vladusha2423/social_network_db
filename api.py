@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from db import Context
-# from decimal import decimal
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysupersecretkey'
@@ -11,11 +10,6 @@ context.create_db()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-
-
-# def my_default(obj):
-#     if isinstance(obj, decimal):
-#         return float(obj)
 
 
 @login_manager.user_loader
@@ -31,7 +25,7 @@ def login():
         print(curr_user)
         if curr_user.password == data['password']:
             login_user(curr_user)
-            return str(curr_user.id)
+            return 'Вы успешно авторизованы'
         else:
             return 'Неверный пароль'
     else:
@@ -47,44 +41,7 @@ def logout():
 @app.route('/api/me')
 @login_required
 def me():
-    return jsonify(context.user_schema.dump(current_user))
-
-
-@app.route('/api/me/postsbypublics')
-@login_required
-def my_publics_posts():
-    a = []
-    for i in current_user.subscriptions:
-        for j in i.post_published:
-            j.views = float(j.views)
-            j.likes = float(j.likes)
-            a.append(j)
-    return jsonify(context.posts_schema.dump(a))
-
-
-# @app.route('/api/me/postsbyusers')
-# @login_required
-# def my_friends_posts():
-#     a = []
-#     for i in current_user.friends:
-#         for j in i.user_post_published:
-#             j.views = float(j.views)
-#             j.likes = float(j.likes)
-#             a.append(j)
-#     return jsonify(context.posts_schema.dump(a))
-
-
-@app.route('/api/me/chats')
-@login_required
-def my_chats():
-    return jsonify(context.chats_schema.dump(current_user.user_chat_member))
-
-
-@app.route('/api/me/chat/<int:chat_id>')
-@login_required
-def message_history(chat_id):
-    chat = context.chats_schema.filter(id=chat_id).first()
-    return jsonify(context.chats_schema.dump(chat.chat_messages))
+    return jsonify(current_user)
 
 
 # USER OPERATIONS
@@ -186,13 +143,13 @@ def create_post():
                           data['photo'],
                           data['views'],
                           data['likes'])
-    return 'post appended!'
+    return ' appended!'
 
 
 @app.route('/api/posts/<int:post_id>', methods=['DELETE'])
 def delete_post(post_id):
     context.ops.remove('post', post_id)
-    return 'post deleted!'
+    return ' deleted!'
 
 
 # PUBLICS OPERATIONS

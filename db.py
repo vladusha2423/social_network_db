@@ -189,7 +189,7 @@ class Context:
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{user}:{pw}@{url}/{db}'.format(user='postgres',
                                                                                                   pw='2423',
                                                                                                   url='dvv2423.fvds.ru',
-                                                                                                  db='social_network')
+                                                                                                  db='social_network_3')
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
         self.db = SQLAlchemy(self.app)
@@ -223,6 +223,23 @@ class Context:
                                           self.db.Column('member', self.db.Integer, self.db.ForeignKey('users.id'))
                                           )
 
+        class Friendship(self.db.Model):
+            __tablename__ = 'Friendship'
+            subscriber_id = self.db.Column(self.db.Integer, primary_key=True)
+            user_id = self.db.Column(self.db.Integer, self.db.ForeignKey('users.id'), primary_key=True)
+
+            def __init__(self, s_id, u_id):
+                self.subscriber_id = s_id
+                self.user_id = u_id
+
+        class FriendshipSchema(self.ma.Schema):
+            class Meta:
+                fields = ('subscriber_id', 'user_id')
+
+        self.friendship = Friendship
+        self.friendship_schema = FriendshipSchema()
+        self.friendships_schema = FriendshipSchema(many=True)
+
         class Users(user_mixin, self.db.Model):
             id = self.db.Column(self.db.INTEGER, primary_key=True)
             nick = self.db.Column(self.db.VARCHAR(50), nullable=False)
@@ -231,6 +248,8 @@ class Context:
             password = self.db.Column(self.db.VARCHAR(50), nullable=False)
             name = self.db.Column(self.db.VARCHAR(50))
             surname = self.db.Column(self.db.VARCHAR(50))
+
+            user_subscribers = self.db.relationship('Friendship')
 
             subscriptions = self.db.relationship('Public', secondary=self.public_subscribers,
                                                  backref=self.db.backref('subscribers', lazy='dynamic'))
@@ -242,9 +261,6 @@ class Context:
                                                     backref=self.db.backref('chat_join', lazy='dynamic'))
 
             user_messages = self.db.relationship('Message', backref='user_message_owner')
-
-            # followers = self.db.relationship('Users', secondary=friends,
-            #                           backref=self.db.backref('subscribe', lazy='dynamic'))
 
             def __init__(self, nick, avatar,
                          descr, password, name,
@@ -374,4 +390,3 @@ class Context:
 
         self.check = Check(self.db)
         self.ops = Operations(self.db, self.tables)
-
