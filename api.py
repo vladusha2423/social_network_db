@@ -41,7 +41,7 @@ def logout():
 @app.route('/api/me')
 @login_required
 def me():
-    return jsonify(current_user)
+    return jsonify(context.user_schema.dump(current_user))
 
 
 # USER OPERATIONS
