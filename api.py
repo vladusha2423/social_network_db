@@ -76,7 +76,7 @@ def my_chats():
 @app.route('/api/me/chat/<int:chat_id>')
 @login_required
 def message_history(chat_id):
-    chat = context.chats_schema.filter(id=chat_id).first()
+    chat = context.ops.filter('chat', id, chat_id, '==')
     return jsonify(context.chats_schema.dump(chat.chat_messages))
 
 # USER OPERATIONS
