@@ -7,16 +7,6 @@ import datetime
 from functools import wraps
 
 
-def posts_correction(obj):
-    a = []
-    for i in obj:
-        for j in i.post_published:
-            j.views = float(j.views)
-            j.likes = float(j.likes)
-            a.append(j)
-    return a
-
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysupersecretkey'
 
@@ -33,7 +23,7 @@ def token_required(f):
             token = request.headers['x-access-token']
 
         if not token:
-            return jsonify({'message' : 'Token is missing!'}), 401
+            return jsonify({'message': 'Token is missing!'}), 401
 
         try:
             data = jwt.decode(token, app.config['SECRET_KEY'])
@@ -51,7 +41,6 @@ def login():
     data = request.get_json() or {}
     if 'login' in data and 'password' in data:
         curr_user = context.user.query.filter_by(nick=data['login']).first()
-        print(curr_user)
         if curr_user.password == data['password']:
             token = jwt.encode(
                 {'id': curr_user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
@@ -73,31 +62,67 @@ def me(current_user):
 @app.route('/api/me/postsbypublics')
 @token_required
 def my_publics_posts(current_user):
-    return jsonify(context.posts_schema.dump(posts_correction(current_user.subscriptions)))
+    a = []
+    for i in current_user.subscriptions:
+        for j in i.post_published:
+            j.views = float(j.views)
+            j.likes = float(j.likes)
+            a.append(j)
+    return jsonify(context.posts_schema.dump(a))
 
 
-# @app.route('/api/me/postsbyusers')
-# @token_required
-# def my_friends_posts():
-#     a = []
-#     for i in current_user.friends:
-#         for j in i.user_post_published:
-#             j.views = float(j.views)
-#             j.likes = float(j.likes)
-#             a.append(j)
-#     return jsonify(context.posts_schema.dump(a))
+# аще агонь, там только смержить работу двух функций и отсортировать, и будет фид
+# можно похожую тему сделать кароче в чатах, чтобы не чисто по алфавиту были раскиданы, но это если успеем
+@app.route('/api/me/postsbyusers')
+@token_required
+def my_friends_posts(current_user):
+    a = []
+    for i in current_user.user_subscribers:
+        friend = context.user.query.filter_by(id=i.subscriber_id).first()
+        print(friend.nick)
+        for j in friend.user_post_published:
+            j.views = float(j.views)
+            j.likes = float(j.likes)
+            a.append(j)
+    return jsonify(context.posts_schema.dump(a))
 
+
+# работает только с пустыми параметрами, на всё остальное ругается, поди рвзбери почему
+@app.route('/api/me/publics')
+@token_required
+def my_publics(current_user):
+    a = []
+    for i in current_user.subscriptions:
+        pub = context.public.query.filter_by(id=i.id).first()
+        a.append(str(pub.description))
+        print(pub.description)
+    return jsonify(context.publics_schema.dump(a))
+
+
+# работает как конфетка просто
+@app.route('/api/me/subscribers')
+@token_required
+def my_subscribers(current_user):
+    a = []
+    for i in current_user.user_subscribers:
+        a.append(context.user.query.filter_by(id=i.subscriber_id).first())
+    return jsonify(context.users_schema.dump(a))
+
+
+# заебись работает
 @app.route('/api/me/chats')
 @token_required
 def my_chats(current_user):
     return jsonify(context.chats_schema.dump(current_user.user_chat_member))
 
 
+# вроде не роняет ничего, надо проверить
 @app.route('/api/me/chat/<int:chat_id>')
 @token_required
 def message_history(current_user, chat_id):
-    chat = context.ops.filter('chat', id, chat_id, '==')
-    return jsonify(context.chats_schema.dump(chat.chat_messages))
+    chat = context.chat.query.filter_by(id=chat_id).first()
+    return jsonify(context.messages_schema.dump(chat.chat_messages))
+
 
 # USER OPERATIONS
 
