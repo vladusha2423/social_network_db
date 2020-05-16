@@ -189,7 +189,7 @@ class Context:
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{user}:{pw}@{url}/{db}'.format(user='postgres',
                                                                                                   pw='2423',
                                                                                                   url='dvv2423.fvds.ru',
-                                                                                                  db='social_network_3')
+                                                                                                  db='social_network')
         self.app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 
         self.db = SQLAlchemy(self.app)

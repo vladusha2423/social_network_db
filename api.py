@@ -1,6 +1,18 @@
 from flask import Flask, jsonify, request
 from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from db import Context
+# from decimal import Decimal
+
+
+def posts_correction(obj):
+    a = []
+    for i in obj:
+        for j in i.post_published:
+            j.views = float(j.views)
+            j.likes = float(j.likes)
+            a.append(j)
+    return a
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysupersecretkey'
@@ -47,13 +59,7 @@ def me():
 @app.route('/api/me/postsbypublics')
 @login_required
 def my_publics_posts():
-    a = []
-    for i in current_user.subscriptions:
-        for j in i.post_published:
-            j.views = float(j.views)
-            j.likes = float(j.likes)
-            a.append(j)
-    return jsonify(context.posts_schema.dump(a))
+    return jsonify(context.posts_schema.dump(posts_correction(current_user.subscriptions)))
 
 
 # @app.route('/api/me/postsbyusers')
@@ -166,7 +172,12 @@ def delete_chat(chat_id):
 
 @app.route('/api/posts')
 def get_posts():
-    return jsonify(context.posts_schema.dump(context.ops.return_table('post')))
+    a = []
+    for i in context.ops.return_table('post'):
+        i.views = float(i.views)
+        i.likes = float(i.likes)
+        a.append(i)
+    return jsonify(context.posts_schema.dump(a))
 
 
 @app.route('/api/posts', methods=['POST'])
