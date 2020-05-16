@@ -1,7 +1,10 @@
 from flask import Flask, jsonify, request
-from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user, login_required
 from db import Context
-# from decimal import Decimal
+import uuid
+from werkzeug.security import generate_password_hash, check_password_hash
+import jwt
+import datetime
+from functools import wraps
 
 
 def posts_correction(obj):
@@ -17,16 +20,30 @@ def posts_correction(obj):
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysupersecretkey'
 
-context = Context(app, UserMixin)
+context = Context(app)
 context.create_db()
 
-login_manager = LoginManager()
-login_manager.init_app(app)
 
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
 
-@login_manager.user_loader
-def load_user(user_id):
-    return context.user.query.get(int(user_id))
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
+
+        if not token:
+            return jsonify({'message' : 'Token is missing!'}), 401
+
+        try:
+            data = jwt.decode(token, app.config['SECRET_KEY'])
+            current_user = context.user.query.filter_by(id=data['id']).first()
+        except:
+            return jsonify({'message': 'Token is invalid!'}), 401
+
+        return f(current_user, *args, **kwargs)
+
+    return decorated
 
 
 @app.route('/api/login', methods=['POST'])
@@ -36,34 +53,31 @@ def login():
         curr_user = context.user.query.filter_by(nick=data['login']).first()
         print(curr_user)
         if curr_user.password == data['password']:
-            login_user(curr_user)
-            return str(curr_user.id)
+            token = jwt.encode(
+                {'id': curr_user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
+                app.config['SECRET_KEY'])
+
+            return jsonify({'token': token.decode('UTF-8')})
         else:
             return 'Неверный пароль'
     else:
         return 'Не все данные введены'
 
 
-@app.route('/api/logout')
-def logout():
-    logout_user()
-    return 'Вы успешно вышли из системы'
-
-
 @app.route('/api/me')
-@login_required
-def me():
+@token_required
+def me(current_user):
     return jsonify(context.user_schema.dump(current_user))
 
 
 @app.route('/api/me/postsbypublics')
-@login_required
-def my_publics_posts():
+@token_required
+def my_publics_posts(current_user):
     return jsonify(context.posts_schema.dump(posts_correction(current_user.subscriptions)))
 
 
 # @app.route('/api/me/postsbyusers')
-# @login_required
+# @token_required
 # def my_friends_posts():
 #     a = []
 #     for i in current_user.friends:
@@ -74,14 +88,14 @@ def my_publics_posts():
 #     return jsonify(context.posts_schema.dump(a))
 
 @app.route('/api/me/chats')
-@login_required
-def my_chats():
+@token_required
+def my_chats(current_user):
     return jsonify(context.chats_schema.dump(current_user.user_chat_member))
 
 
 @app.route('/api/me/chat/<int:chat_id>')
-@login_required
-def message_history(chat_id):
+@token_required
+def message_history(current_user, chat_id):
     chat = context.ops.filter('chat', id, chat_id, '==')
     return jsonify(context.chats_schema.dump(chat.chat_messages))
 

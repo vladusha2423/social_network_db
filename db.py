@@ -184,7 +184,7 @@ class Context:
     def create_db(self):
         self.db.create_all()
 
-    def __init__(self, application, user_mixin):
+    def __init__(self, application):
         self.app = application
         self.app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{user}:{pw}@{url}/{db}'.format(user='postgres',
                                                                                                   pw='2423',
@@ -240,7 +240,7 @@ class Context:
         self.friendship_schema = FriendshipSchema()
         self.friendships_schema = FriendshipSchema(many=True)
 
-        class Users(user_mixin, self.db.Model):
+        class Users(self.db.Model):
             id = self.db.Column(self.db.INTEGER, primary_key=True)
             nick = self.db.Column(self.db.VARCHAR(50), nullable=False)
             avatar = self.db.Column(self.db.VARCHAR(200))
