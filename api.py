@@ -93,22 +93,13 @@ def my_feed(current_user):
         for j in friend.user_post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
-            a.append(j)
-            # b.append(friend.nick)
-            # c.append(context.posts_schema.dump(j) + friend.nick)
-            # c.append(context.posts_schema.dump(j))
+            c.append(context.posts_schema.dump([j]) + [friend.nick])
     for i in current_user.subscriptions:
         for j in i.post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
-            a.append(j)
-            # c.append(context.users_schema.dump(j) + i.title)
-            #c.append(context.users_schema.dump(j))
-    a.sort(key=lambda x: x.time, reverse=True)
-    # for i in a:
-      # author =
-    return jsonify(context.posts_schema.dump(a) + b)
-    # return jsonify(c)
+            c.append(context.posts_schema.dump([j]) + [i.title])
+    return jsonify(c)
 
 
 @app.route('/api/me/publics')
