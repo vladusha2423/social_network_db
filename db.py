@@ -4,116 +4,103 @@ from sqlalchemy_filters import apply_filters
 from flask_marshmallow import Marshmallow
 
 
-# friends = db.Table('Friends',                                          не работает
-#    db.Column('id_1', db.Integer, db.ForeignKey('users.id')),
-#    db.Column('id_2', db.Integer, db.ForeignKey('users.id'))
-# )
+class Pair:
+
+    def __init__(self, db, tables, ops):
+        self.db = db
+        self.tables = tables
+        self.ops = ops
+
+    def public_subscribers(self, user_id, public_id):
+        user = self.ops.return_row("user", id=user_id)
+        public = self.ops.return_row("public", id=public_id)
+
+        if user is None:
+            raise ValueError('Пользователя с таким id не существует!')
+
+        if public is None:
+            raise ValueError('Паблика с таким id не существует!')
 
 
-class Check:
-    db = None
+        public.subscribers.append(user)
+        self.db.session.commit()
 
-    @staticmethod
-    def public_subscribers_checking(self, UserObject, PublicObject):
-        # user = Users(nick='nagibator228', avatar='', descr='dodik', password=12345,
-        #     name='Martin', surname='Iden')
-        # public = Public(title='dqrq', avatar='fqt', description='qwtwqtqt')
-        try:
-            self.db.session.add(UserObject)  # можно использовать self.db.session.add_all([public, user])
-            self.db.session.add(PublicObject)
-            PublicObject.subscribers.append(UserObject)
-            self.db.session.commit()
-        except ValueError:
-            print("FAIL")
-        else:
-            return True
+        return True
 
-    @staticmethod
-    def user_post_published_checking(self, UserObject, PostObject):
-        # user = Users(nick='na132', avatar='rqwtq', descr='dok', password=125,
-        #         name='Fidel', surname='Castro')
-        # post = Post(text='Cuba is free!')
-        try:
-            self.db.session.add(UserObject)
-            self.db.session.add(PostObject)
-            PostObject.published.append(UserObject)
-            self.db.session.commit()
-        except ValueError:
-            print("FAIL")
-        else:
-            return True
+    def user_post_published(self, user_id, post_id):
+        user = self.ops.return_row("user", id=user_id)
+        post = self.ops.return_row("post", id=post_id)
 
-    @staticmethod
-    def public_post_published_checking(self, PublicObject, PostObject):
-        # public = Public(title='d123')
-        # post = Post(text='Hello!')
-        try:
-            self.db.session.add(PublicObject)
-            self.db.session.add(PostObject)
-            PostObject.pub_published.append(PublicObject)
-            self.db.session.commit()
-        except ValueError:
-            print("FAIL")
-        else:
-            return True
+        if user is None:
+            raise ValueError('Пользователя с таким id не существует!')
 
-    @staticmethod
-    def user_chat_member_checking(self, UserObject, ChatObject):
-        try:
-            # user = Users(nick='VasilyPupkin', avatar='rqwqq', descr='Vasily', password=1225,
-            #         name='Vasily', surname='Pupkin')
-            # chat = Chat(type='dialog', title='basedata')
-            self.db.session.add(UserObject)
-            self.db.session.add(ChatObject)
-            ChatObject.chat_join.append(UserObject)
-            self.db.session.commit()
-        except ValueError:
-            print("FAIL")
-        else:
-            return True
+        if post is None:
+            raise ValueError('Поста с таким id не существует!')
 
-    @staticmethod
-    def user2message_checking(self, UserObject, MessageObject):
-        # user = Users(nick='DonaldTrump', avatar='rqdwwqq', descr='America', password=1225,
-        #             name='Hi', surname='Clinton')
-        # message = Message(text='America began operations in Russia!',
-        #                  user_message_owner=user)
-        try:
-            self.db.session.add(UserObject)
-            self.db.session.add(MessageObject)
-            self.db.session.commit()
-        except ValueError:
-            print("FAIL")
-        else:
-            return True
+        post.published.append(user)
+        self.db.session.commit()
 
-    @staticmethod
-    def chat2message_checking(self, ChatObject, MessageObject):
-        try:
-            # chat = Chat(type='dialog', title='next')
-            # message = Message(text='Hi, boys!',
-            #              chat_message_owner=chat)
-            self.db.session.add(ChatObject)
-            self.db.session.add(MessageObject)
-            self.db.session.commit()
-        except ValueError:
-            print("FAIL")
-        else:
-            return True
+        return True
 
-    def __init__(self, database):
-        self.db = database
+    def public_post_published(self, post_id, public_id):
 
-    # def friends_checking():
-    #   user1 = Users(nick='VasilyPupkin', avatar='rqwqq', descr='Vasily', password=1225,
-    #                 name='Vasily', surname='Pupkin')
-    #   user2 = Users(nick='DonaldTrump', avatar='rqdwwqq', descr='America', password=1225,
-    #                 name='Hi', surname='Clinton')
+        post = self.ops.return_row("post", id=post_id)
+        public = self.ops.return_row("public", id=public_id)
 
-    #    db.session.add(user1)
-    #   db.session.add(user2)
-    #  user1.subscribe.append(user2)
-    #  db.session.commit()
+        if post is None:
+            raise ValueError('Поста с таким id не существует!')
+
+        if public is None:
+            raise ValueError('Паблика с таким id не существует!')
+
+        post.pub_published.append(public)
+        self.db.session.commit()
+
+        return True
+
+    def user_chat_member(self, user_id, chat_id):
+
+        user = self.ops.return_row("user", id=user_id)
+        chat = self.ops.return_row("chat", id=chat_id)
+
+        if user is None:
+            raise ValueError('Пользователя с таким id не существует!')
+
+        if chat is None:
+            raise ValueError('Чата с таким id не существует!')
+
+
+        chat.chat_join.append(user)
+        self.db.session.commit()
+
+        return True
+
+    def user2message(self, user_id, message_text):
+
+        user = self.ops.return_row("users", id=user_id)
+        if user is None:
+            raise ValueError('Чата с таким id не существует!')
+        message = self.db.Message(text=message_text, sentby=user)
+
+        self.db.session.add(message)
+        self.db.session.commit()
+
+        return True
+
+    def chat2message(self, chat_id, message_text):
+
+        chat = Operations.return_row("chat", id=chat_id)
+        if chat is None:
+            raise ValueError('Чата с таким id не существует!')
+
+        message = self.db.Message(text=message_text,
+                          chat=chat)
+
+        self.db.session.add(message)
+        self.db.session.commit()
+
+        return True
+
 
 
 class Operations:
@@ -121,7 +108,7 @@ class Operations:
     tables = None
 
     def return_row(self, ClassName, id):
-        self.tables[ClassName].query.filter_by(id=id).first()
+        return self.tables[ClassName].query.filter_by(id=id).first()
 
     def return_table(self, ClassName):
         return self.tables[ClassName].query.all()
@@ -220,7 +207,9 @@ class Context:
 
         self.chat_members = self.db.Table('ChatMembers',  # работает без ролей
                                           self.db.Column('chat', self.db.Integer, self.db.ForeignKey('chat.id')),
-                                          self.db.Column('member', self.db.Integer, self.db.ForeignKey('users.id'))
+                                          self.db.Column('member', self.db.Integer, self.db.ForeignKey('users.id')),
+                                          self.db.Column('role', self.db.Integer,
+                                                         self.db.ForeignKey('roles.id'))
                                           )
 
         class Friendship(self.db.Model):
@@ -287,9 +276,11 @@ class Context:
             sentby = self.db.Column(self.db.Integer, self.db.ForeignKey('users.id'))
             chat = self.db.Column(self.db.Integer, self.db.ForeignKey('chat.id'))
 
-            def __init__(self, text, time=func.now()):
+            def __init__(self, text, time, sentby, chat):
                 self.text = text
                 self.time = time
+                self.sentby = sentby
+                self.chat = chat
 
         class MessageSchema(self.ma.Schema):
             class Meta:
@@ -385,8 +376,9 @@ class Context:
                        'message': Message,
                        'chat': Chat,
                        'post': Post,
+                       'friendship': Friendship,
                        'public': Public,
                        'role': Roles}
 
-        self.check = Check(self.db)
         self.ops = Operations(self.db, self.tables)
+        self.check = Pair(self.db, self.tables, ops=self.ops)

@@ -4,6 +4,7 @@ import jwt
 import datetime
 from functools import wraps
 from flask_cors import CORS
+from sqlalchemy.sql import func
 
 
 app = Flask(__name__)
@@ -141,6 +142,66 @@ def message_history(current_user, chat_id):
     return jsonify(context.messages_schema.dump(chat.chat_messages))
 
 
+@app.route('/api/me/chat/<int:chat_id>', methods=['POST'])
+@token_required
+def publish_message(current_user, chat_id):
+    flag = False
+    for i in current_user.user_chat_member:
+        if i.id == chat_id:
+            flag = True
+    if not flag:
+        return 'access denied!'
+    data = request.get_json() or {}
+    context.ops.appending('message',
+                          data['text'],
+                          func.now(),
+                          current_user.id,
+                          chat_id)
+    return 'message appended!'
+
+
+@app.route('/api/me/post/<int:post_id>/2public', methods=['POST'])
+def connect_post_2_public(post_id):
+    data = request.get_json() or {}
+    context.check.public_post_published(post_id=post_id, public_id=data['public_id'])
+    return 'post and public are connected!'
+
+
+@app.route('/api/me/post/<int:post_id>/2user', methods=['POST'])
+def connect_post_2_user(post_id):
+    data = request.get_json() or {}
+    context.check.user_post_published(post_id=post_id, user_id=data['user_id'])
+    return 'post and user are connected!'
+
+
+@app.route('/api/me/message/<int:message_id>/2user', methods=['POST'])
+def connect_message_2_user(message_id):
+    data = request.get_json() or {}
+    context.check.user2message(message_id=message_id, uset_id=data['user_id'])
+    return 'message and user are connected!'
+
+
+@app.route('/api/me/message/<int:message_id>/2user', methods=['POST'])
+def connect_message_2_chat(message_id):
+    data = request.get_json() or {}
+    context.check.chat2message(message_id=message_id, chat_id=data['user_id'])
+    return 'message and chat are connected!'
+
+
+@app.route('/api/me/public/<int:public_id>/subscribe', methods=['POST'])
+@token_required
+def subscribe2public(current_user, public_id):
+    context.check.public_subscribers(user_id=current_user.id, public_id=public_id)
+    return 'you subscribed successfully!'
+
+
+@app.route('/api/me/chat/<int:chat_id>/join', methods=['POST'])
+@token_required
+def join2chat(current_user, chat_id):
+    context.check.user_chat_member(user_id=current_user.id, chat_id=chat_id)
+    return 'you joined successfully!'
+
+
 # USER OPERATIONS
 
 
@@ -174,8 +235,9 @@ def delete_user(user_id):
 
 
 @app.route('/api/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id, column_name='descr', value='Реальный кекс'):
-    context.ops.update('user', user_id, column_name, value)
+def update_user(user_id):
+    data = request.get_json() or {}
+    context.ops.update('user', user_id, data['column'], data['value'])
     return 'user updated!'
 
 
