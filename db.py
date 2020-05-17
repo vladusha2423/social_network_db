@@ -69,7 +69,6 @@ class Pair:
         if chat is None:
             raise ValueError('Чата с таким id не существует!')
 
-
         chat.chat_join.append(user)
         self.db.session.commit()
 
@@ -124,7 +123,7 @@ class Operations:
         else:
             self.db.session.add(element)
             self.db.session.commit()
-            return True
+            return element
 
     def remove(self, ClassName, id):  # удаление нашел только по id (оно почему-то не удаляет :( )
         try:

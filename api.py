@@ -6,7 +6,6 @@ from functools import wraps
 from flask_cors import CORS
 from sqlalchemy.sql import func
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysupersecretkey'
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -94,7 +93,7 @@ def my_feed(current_user):
         for j in friend.user_post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
-            c.append(context.posts_schema.dump([j]) + [friend.name, friend.surname, friend.avatar])
+            c.append(context.posts_schema.dump([j]) + [friend.name + ' ' + friend.surname, friend.avatar])
     for i in current_user.subscriptions:
         for j in i.post_published:
             j.views = float(j.views)
@@ -160,18 +159,17 @@ def publish_message(current_user, chat_id):
     return 'message appended!'
 
 
-@app.route('/api/me/post/<int:post_id>/2public', methods=['POST'])
-def connect_post_2_public(post_id):
-    data = request.get_json() or {}
-    context.check.public_post_published(post_id=post_id, public_id=data['public_id'])
-    return 'post and public are connected!'
+@app.route('/api/me/post/<int:post_id>/<int:public_id>/2public', methods=['POST'])
+def connect_post_2_public(post_id, public_id):
+    context.check.public_post_published(post_id=post_id, public_id=public_id)
+    return 'Post added to public!'
 
 
 @app.route('/api/me/post/<int:post_id>/2user', methods=['POST'])
-def connect_post_2_user(post_id):
-    data = request.get_json() or {}
-    context.check.user_post_published(post_id=post_id, user_id=data['user_id'])
-    return 'post and user are connected!'
+@token_required
+def connect_post_2_user(current_user, post_id):
+    context.check.user_post_published(post_id=post_id, user_id=current_user.id)
+    return 'post added!'
 
 
 @app.route('/api/me/message/<int:message_id>/2user', methods=['POST'])
@@ -188,6 +186,18 @@ def connect_message_2_chat(message_id):
     return 'message and chat are connected!'
 
 
+@app.route('/api/me/message/<int:chat_id>', methods=['POST'])
+@token_required
+def send_message(current_user, chat_id):
+    data = request.get_json() or {}
+    context.ops.appending('message',
+                          data['text'],
+                          func.now(),
+                          current_user.id,
+                          chat_id)
+    return 'message appended!'
+
+
 @app.route('/api/me/public/<int:public_id>/subscribe', methods=['POST'])
 @token_required
 def subscribe2public(current_user, public_id):
@@ -195,10 +205,16 @@ def subscribe2public(current_user, public_id):
     return 'you subscribed successfully!'
 
 
-@app.route('/api/me/chat/<int:chat_id>/join', methods=['POST'])
+@app.route('/api/me/user/subscribe/<int:usr_id>', methods=['POST'])
 @token_required
-def join2chat(current_user, chat_id):
-    context.check.user_chat_member(user_id=current_user.id, chat_id=chat_id)
+def subscribe_user(current_user, usr_id):
+    context.ops.appending('friendship', current_user.id, usr_id)
+    return 'subscribed!'
+
+
+@app.route('/api/me/chat/<int:chat_id>/<int:user_id>/join', methods=['POST'])
+def join2chat(chat_id, user_id):
+    context.check.user_chat_member(user_id=user_id, chat_id=chat_id)
     return 'you joined successfully!'
 
 
@@ -211,6 +227,7 @@ def define_admin_of_public(current_user, public_id):
     #     if i.id == public_id and i.role:
     #         flag = True
     # if not flag:
+
 
 # USER OPERATIONS
 
@@ -304,8 +321,8 @@ def get_chat(current_user, chat_id):
 @app.route('/api/chats', methods=['POST'])
 def create_chat():
     data = request.get_json() or {}
-    context.ops.appending(data['chat'], data['id'], data['type'], data['title'], data['avatar'])
-    return 'chat appended!'
+    el = context.ops.appending('chat', data['type'], data['title'], data['avatar'])
+    return jsonify({'message': 'chat added successfully', 'chat_id': el.id})
 
 
 @app.route('/api/chats/<int:chat_id>', methods=['DELETE'])
@@ -348,13 +365,13 @@ def get_posts():
 @app.route('/api/posts', methods=['POST'])
 def create_post():
     data = request.get_json() or {}
-    context.ops.appending(data['post'],
-                          data['text'],
-                          data['time'],
-                          data['photo'],
-                          data['views'],
-                          data['likes'])
-    return 'post appended!'
+    post = context.ops.appending('post',
+                                 data['text'],
+                                 func.now(),
+                                 data['photo'],
+                                 data['views'],
+                                 data['likes'])
+    return jsonify({'message': 'post added successfully', 'post_id': post.id})
 
 
 @app.route('/api/posts/<int:post_id>', methods=['DELETE'])
@@ -379,12 +396,11 @@ def get_public(pub_id):
 @app.route('/api/publics', methods=['POST'])
 def create_public():
     data = request.get_json() or {}
-    context.ops.appending(data['public'],
-                          data['id'],
-                          data['title'],
-                          data['avatar'],
-                          data['description'])
-    return 'public appended!'
+    el = context.ops.appending('public',
+                               data['title'],
+                               data['description'],
+                               data['avatar'])
+    return jsonify({'message': 'Public added successfully!', 'public_id': el.id})
 
 
 @app.route('/api/publics/<int:public_id>', methods=['DELETE'])
