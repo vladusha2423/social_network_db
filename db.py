@@ -360,7 +360,7 @@ class Context:
 
         class PublicSchema(self.ma.Schema):
             class Meta:
-                fields = ('id', 'title', 'avatar', 'description', 'post_published')
+                fields = ('id', 'title', 'avatar', 'description')
 
         self.public = Public
         self.public_schema = PublicSchema()

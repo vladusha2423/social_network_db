@@ -91,12 +91,15 @@ def my_friends_posts(current_user):
 @app.route('/api/me/publics')
 @token_required
 def my_publics(current_user):
-    a = []
-    for i in current_user.subscriptions:
-        pub = context.public.query.filter_by(id=i.id).first()
-        a.append(str(pub.description))
-        print(pub.description)
-    return jsonify(context.publics_schema.dump(a))
+    public = current_user.subscriptions
+    print(public)
+    # a = []
+    # for i in current_user.subscriptions:
+    #     pub = context.public.query.filter_by(id=i.id).first()
+    #     a.append(str(pub.description))
+    #     print(pub.description)
+    # print(context.publics_schema.dump(a))
+    return jsonify(context.publics_schema.dump(public))
 
 
 # работает как конфетка просто
