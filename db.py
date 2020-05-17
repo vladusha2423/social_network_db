@@ -315,7 +315,7 @@ class Context:
 
         class ChatSchema(self.ma.Schema):
             class Meta:
-                fields = ('id', 'type', 'title', 'avatar', 'count')
+                fields = ('id', 'type', 'title', 'avatar', 'count', 'members')
 
         self.chat = Chat
         self.chat_schema = ChatSchema()

@@ -222,6 +222,22 @@ def get_chats():
     return jsonify(context.chats_schema.dump(context.ops.return_table('chat')))
 
 
+@app.route('/api/chat/<int:chat_id>')
+@token_required
+def get_chat(current_user, chat_id):
+    item = context.chat.query.filter_by(id=chat_id).first()
+    item.members = context.users_schema.dump(item.chat_join)
+    item.count = len(item.members)
+    if item.count == 2:
+        if item.members[0]['id'] == current_user.id:
+            item.avatar = item.members[1]['avatar']
+            item.title = item.members[1]['name'] + ' ' + item.members[1]['surname']
+        else:
+            item.avatar = item.members[0]['avatar']
+            item.title = item.members[0]['name'] + ' ' + item.members[0]['surname']
+    return jsonify(context.chat_schema.dump(item))
+
+
 @app.route('/api/chats', methods=['POST'])
 def create_chat():
     data = request.get_json() or {}
@@ -336,4 +352,4 @@ def delete_role(role_id):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="localhost", port=int("5500"), debug=False)
