@@ -87,18 +87,18 @@ def my_friends_posts(current_user):
 @app.route('/api/me/feed')
 @token_required
 def my_feed(current_user):
-    a, b, c = [], [], []
+    c = []
     for i in current_user.user_subscribers:
         friend = context.user.query.filter_by(id=i.subscriber_id).first()
         for j in friend.user_post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
-            c.append(context.posts_schema.dump([j]) + [friend.nick])
+            c.append(context.posts_schema.dump([j]) + [friend.name, friend.surname, friend.avatar])
     for i in current_user.subscriptions:
         for j in i.post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
-            c.append(context.posts_schema.dump([j]) + [i.title])
+            c.append(context.posts_schema.dump([j]) + [i.title, i.avatar])
     return jsonify(c)
 
 
