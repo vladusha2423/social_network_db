@@ -177,7 +177,7 @@ def connect_post_2_user(post_id):
 @app.route('/api/me/message/<int:message_id>/2user', methods=['POST'])
 def connect_message_2_user(message_id):
     data = request.get_json() or {}
-    context.check.user2message(message_id=message_id, user_id==data['user_id'])
+    context.check.user2message(message_id=message_id, user_id=data['user_id'])
     return 'message and user are connected!'
 
 
