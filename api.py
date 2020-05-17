@@ -79,7 +79,6 @@ def my_friends_posts(current_user):
     a = []
     for i in current_user.user_subscribers:
         friend = context.user.query.filter_by(id=i.subscriber_id).first()
-        print(friend.nick)
         for j in friend.user_post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
@@ -87,19 +86,30 @@ def my_friends_posts(current_user):
     return jsonify(context.posts_schema.dump(a))
 
 
+@app.route('/api/me/feed')
+@token_required
+def my_feed(current_user):
+    a = []
+    for i in current_user.user_subscribers:
+        friend = context.user.query.filter_by(id=i.subscriber_id).first()
+        for j in friend.user_post_published:
+            j.views = float(j.views)
+            j.likes = float(j.likes)
+            a.append(j)
+    for i in current_user.subscriptions:
+        for j in i.post_published:
+            j.views = float(j.views)
+            j.likes = float(j.likes)
+            a.append(j)
+    a.sort(key=lambda x: x.time, reverse=True)
+    return jsonify(context.posts_schema.dump(a))
+
+
 # работает только с пустыми параметрами, на всё остальное ругается, поди рвзбери почему
 @app.route('/api/me/publics')
 @token_required
 def my_publics(current_user):
-    public = current_user.subscriptions
-    print(public)
-    # a = []
-    # for i in current_user.subscriptions:
-    #     pub = context.public.query.filter_by(id=i.id).first()
-    #     a.append(str(pub.description))
-    #     print(pub.description)
-    # print(context.publics_schema.dump(a))
-    return jsonify(context.publics_schema.dump(public))
+    return jsonify(context.publics_schema.dump(current_user.subscriptions))
 
 
 # работает как конфетка просто
@@ -107,7 +117,6 @@ def my_publics(current_user):
 @token_required
 def my_subscribers(current_user):
     a = []
-    print(current_user.user_subscribers)
     for i in current_user.user_subscribers:
         a.append(context.user.query.filter_by(id=i.subscriber_id).first())
     return jsonify(context.users_schema.dump(a))
