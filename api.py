@@ -147,6 +147,11 @@ def get_users():
     return jsonify(context.users_schema.dump(context.ops.return_table('user')))
 
 
+@app.route('/api/user/<int:user_id>')
+def get_user(user_id):
+    return jsonify(context.user_schema.dump(context.user.query.filter_by(id=user_id).first()))
+
+
 @app.route('/api/users', methods=['POST'])
 def create_user():
     data = request.get_json() or {}
@@ -224,6 +229,24 @@ def delete_chat(chat_id):
 # POSTS OPERATIONS
 
 
+@app.route('/api/posts/user/<int:user_id>')
+def get_posts_by_user(user_id):
+    posts = context.user.query.filter_by(id=user_id).first().user_post_published
+    for i in posts:
+        i.views = float(i.views)
+        i.likes = float(i.likes)
+    return jsonify(context.posts_schema.dump(posts))
+
+
+@app.route('/api/posts/public/<int:public_id>')
+def get_posts_by_public(public_id):
+    posts = context.public.query.filter_by(id=public_id).first().post_published
+    for i in posts:
+        i.views = float(i.views)
+        i.likes = float(i.likes)
+    return jsonify(context.posts_schema.dump(posts))
+
+
 @app.route('/api/posts')
 def get_posts():
     a = []
@@ -258,6 +281,11 @@ def delete_post(post_id):
 @app.route('/api/publics')
 def get_publics():
     return jsonify(context.publics_schema.dump(context.ops.return_table('public')))
+
+
+@app.route('/api/public/<int:pub_id>')
+def get_public(pub_id):
+    return jsonify(context.public_schema.dump(context.public.query.filter_by(id=pub_id).first()))
 
 
 @app.route('/api/publics', methods=['POST'])
