@@ -202,6 +202,16 @@ def join2chat(current_user, chat_id):
     return 'you joined successfully!'
 
 
+@app.route('/api/me/chat/<int:public_id>/is_admin', methods=['POST'])
+@token_required
+def define_admin_of_public(current_user, public_id):
+    flag = False
+    for i in current_user.public_subscribers:
+        print(i)
+    #     if i.id == public_id and i.role:
+    #         flag = True
+    # if not flag:
+
 # USER OPERATIONS
 
 

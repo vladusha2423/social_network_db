@@ -102,7 +102,6 @@ class Pair:
         return True
 
 
-
 class Operations:
     db = None
     tables = None
