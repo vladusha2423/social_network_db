@@ -71,8 +71,6 @@ def my_publics_posts(current_user):
     return jsonify(context.posts_schema.dump(a))
 
 
-# аще агонь, там только смержить работу двух функций и отсортировать, и будет фид
-# можно похожую тему сделать кароче в чатах, чтобы не чисто по алфавиту были раскиданы, но это если успеем
 @app.route('/api/me/postsbyusers')
 @token_required
 def my_friends_posts(current_user):
@@ -89,30 +87,36 @@ def my_friends_posts(current_user):
 @app.route('/api/me/feed')
 @token_required
 def my_feed(current_user):
-    a = []
+    a, b, c = [], [], []
     for i in current_user.user_subscribers:
         friend = context.user.query.filter_by(id=i.subscriber_id).first()
         for j in friend.user_post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
             a.append(j)
+            # b.append(friend.nick)
+            # c.append(context.posts_schema.dump(j) + friend.nick)
+            # c.append(context.posts_schema.dump(j))
     for i in current_user.subscriptions:
         for j in i.post_published:
             j.views = float(j.views)
             j.likes = float(j.likes)
             a.append(j)
+            # c.append(context.users_schema.dump(j) + i.title)
+            #c.append(context.users_schema.dump(j))
     a.sort(key=lambda x: x.time, reverse=True)
-    return jsonify(context.posts_schema.dump(a))
+    # for i in a:
+      # author =
+    return jsonify(context.posts_schema.dump(a) + b)
+    # return jsonify(c)
 
 
-# работает только с пустыми параметрами, на всё остальное ругается, поди рвзбери почему
 @app.route('/api/me/publics')
 @token_required
 def my_publics(current_user):
     return jsonify(context.publics_schema.dump(current_user.subscriptions))
 
 
-# работает как конфетка просто
 @app.route('/api/me/subscribers')
 @token_required
 def my_subscribers(current_user):
@@ -122,7 +126,6 @@ def my_subscribers(current_user):
     return jsonify(context.users_schema.dump(a))
 
 
-# заебись работает
 @app.route('/api/me/chats')
 @token_required
 def my_chats(current_user):
@@ -140,7 +143,6 @@ def my_chats(current_user):
     return jsonify(context.chats_schema.dump(current_user.user_chat_member))
 
 
-# вроде не роняет ничего, надо проверить
 @app.route('/api/me/chat/<int:chat_id>')
 @token_required
 def message_history(current_user, chat_id):
@@ -180,12 +182,10 @@ def delete_user(user_id):
     return 'user deleted!'
 
 
-"""
 @app.route('/api/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id, column_name, value):
+def update_user(user_id, column_name='descr', value='Реальный кекс'):
     context.ops.update('user', user_id, column_name, value)
     return 'user updated!'
-"""
 
 
 # MESSAGE OPERATIONS
