@@ -1,14 +1,14 @@
 from flask import Flask, jsonify, request
 from db import Context
-import uuid
-from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
 import datetime
 from functools import wraps
+from flask_cors import CORS
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'mysupersecretkey'
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 context = Context(app)
 context.create_db()
@@ -43,7 +43,7 @@ def login():
         curr_user = context.user.query.filter_by(nick=data['login']).first()
         if curr_user.password == data['password']:
             token = jwt.encode(
-                {'id': curr_user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)},
+                {'id': curr_user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=120)},
                 app.config['SECRET_KEY'])
 
             return jsonify({'token': token.decode('UTF-8')})
@@ -107,6 +107,7 @@ def my_publics(current_user):
 @token_required
 def my_subscribers(current_user):
     a = []
+    print(current_user.user_subscribers)
     for i in current_user.user_subscribers:
         a.append(context.user.query.filter_by(id=i.subscriber_id).first())
     return jsonify(context.users_schema.dump(a))
@@ -116,6 +117,17 @@ def my_subscribers(current_user):
 @app.route('/api/me/chats')
 @token_required
 def my_chats(current_user):
+    for item in current_user.user_chat_member:
+        members = context.users_schema.dump(item.chat_join)
+        item.count = len(members)
+        if item.count == 2:
+            if members[0]['id'] == current_user.id:
+                item.avatar = members[1]['avatar']
+                item.title = members[1]['name'] + ' ' + members[1]['surname']
+            else:
+                item.avatar = members[0]['avatar']
+                item.title = members[0]['name'] + ' ' + members[0]['surname']
+
     return jsonify(context.chats_schema.dump(current_user.user_chat_member))
 
 
